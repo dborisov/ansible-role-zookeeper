@@ -1,0 +1,66 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+  - name: "${IMAGE:-rockylinux}-${TAG:-8}-zookeeper-1"
+    hostname: zookeeper-1
+    image: "${IMAGE:-rockylinux}:${TAG:-8}"
+    pre_build_image: true
+    command: /sbin/init
+    tmpfs:
+      - /run
+      - /tmp
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    published_ports:
+      - "0.0.0.0:2181:2181/tcp"
+    networks:
+      - name: zookeeper
+  - name: "${IMAGE:-rockylinux}-${TAG:-8}-zookeeper-2"
+    hostname: zookeeper-2
+    image: "${IMAGE:-rockylinux}:${TAG:-8}"
+    pre_build_image: true
+    command: /sbin/init
+    tmpfs:
+      - /run
+      - /tmp
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    published_ports:
+      - "0.0.0.0:2182:2181/tcp"
+    networks:
+      - name: zookeeper
+  - name: "${IMAGE:-rockylinux}-${TAG:-8}-zookeeper-3"
+    hostname: zookeeper-3
+    image: "${IMAGE:-rockylinux}:${TAG:-8}"
+    pre_build_image: true
+    command: /sbin/init
+    tmpfs:
+      - /run
+      - /tmp
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    published_ports:
+      - "0.0.0.0:2183:2181/tcp"
+    networks:
+      - name: zookeeper
+provisioner:
+  name: ansible
+  env:
+    ZOOKEEPER_VERSION: ${ZOOKEEPER_VERSION:-3.7.0}
+  inventory:
+    host_vars:
+      ${IMAGE:-rockylinux}-${TAG:-8}-zookeeper-1:
+        zookeeper_id: 1
+      ${IMAGE:-rockylinux}-${TAG:-8}-zookeeper-2:
+        zookeeper_id: 2
+      ${IMAGE:-rockylinux}-${TAG:-8}-zookeeper-3:
+        zookeeper_id: 3
+verifier:
+  name: ansible
+lint: |
+  set -e
+  yamllint .
+  ansible-lint
