@@ -16,6 +16,7 @@ zookeeper_log_threshold: INFO
 zookeeper_log_max_file_size: 256MB
 zookeeper_log_max_backup_index: 20
 zookeeper_data_dir: /var/lib/zookeeper
+zookeeper_extra_settings: []
 zookeeper_id: 1
 zookeeper_tick_time: 2000
 zookeeper_init_limit: 10
