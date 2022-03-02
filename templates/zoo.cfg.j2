@@ -27,6 +27,9 @@ autopurge.snapRetainCount={{ zookeeper_autopurge_snap_retain_count }}
 # Set to "0" to disable auto purge feature
 autopurge.purgeInterval={{ zookeeper_autopurge_purge_interval }}
 
+# Whitelist Zookeeper commands so that they can be executed from a remote host
+4lw.commands.whitelist={{ zookeeper_cmd_whitelist }}
+
 ## Metrics Providers
 #
 # https://prometheus.io Metrics Exporter
