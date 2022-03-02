@@ -27,16 +27,8 @@ autopurge.snapRetainCount={{ zookeeper_autopurge_snap_retain_count }}
 # Set to "0" to disable auto purge feature
 autopurge.purgeInterval={{ zookeeper_autopurge_purge_interval }}
 
-# For any other settings not covered here, you can define
-#
-# zookeeper_extra_settings:
-# - varName: varValue
-# - otherVarName: otherVarValue
-#
-# Where the var names should match what is detailed in the Zookeeper docs.
-{% for var_name, var_value in zookeeper_extra_settings.items() %}
-{{ var_name }}={{ var_value }}
-{% endfor %}
+# Whitelist Zookeeper commands so that they can be executed from a remote host
+4lw.commands.whitelist={{ zookeeper_cmd_whitelist }}
 
 ## Metrics Providers
 #
