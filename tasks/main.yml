@@ -1,4 +1,8 @@
 ---
+- name: Ensure ps util is installed
+  yum:
+    name: procps-ng # For zkServer.sh
+
 - name: Ensure {{ zookeeper_group_name }} group exists
   group:
     name: "{{ zookeeper_group_name }}"
@@ -106,5 +110,3 @@
     owner: "{{ zookeeper_user_name }}"
     group: "{{ zookeeper_group_name }}"
     mode: '0644'
-
-# Настроить workflows
