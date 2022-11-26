@@ -1,40 +1,164 @@
-# The number of milliseconds of each tick
-tickTime={{ zookeeper_tick_time }}
-# The number of ticks that the initial 
-# synchronization phase can take
-initLimit={{ zookeeper_init_limit }}
-# The number of ticks that can pass between 
-# sending a request and getting an acknowledgement
-syncLimit={{ zookeeper_sync_limit }}
-# the directory where the snapshot is stored.
-# do not use /tmp for storage, /tmp here is just 
-# example sakes.
+# {{ ansible_managed }}
+# Please see Zookeeper Admin's Guide for configuration details
+# https://zookeeper.apache.org/doc/r3.8.0/zookeeperAdmin.html
+
+# Minimum configuration
 dataDir={{ zookeeper_data_dir }}
-# the port at which the clients will connect
+{% if zookeeper_client_port is not defined and zookeeper_secure_client_port is not defined %}
+clientPort=2181
+{% elif zookeeper_client_port is defined and zookeeper_client_port %}
 clientPort={{ zookeeper_client_port }}
-# the maximum number of client connections.
-# increase this if you need to handle more clients
+{% endif %}
+{% if zookeeper_secure_client_port is defined and zookeeper_secure_client_port %}
+secureClientPort={{ zookeeper_secure_client_port }}
+{% endif %}
+{% if zookeeper_tick_time is defined and zookeeper_tick_time %}
+tickTime={{ zookeeper_tick_time }}
+{% endif %}
+
+# Advanced configuration
+{% if zookeeper_max_client_connections is defined and zookeeper_max_client_connections %}
 maxClientCnxns={{ zookeeper_max_client_connections }}
-#
-# Be sure to read the maintenance section of the 
-# administrator guide before turning on autopurge.
-#
-# http://zookeeper.apache.org/doc/current/zookeeperAdmin.html#sc_maintenance
-#
-# The number of snapshots to retain in dataDir
+{% endif %}
+{% if zookeeper_autopurge_snap_retain_count is defined and zookeeper_autopurge_snap_retain_count %}
 autopurge.snapRetainCount={{ zookeeper_autopurge_snap_retain_count }}
-# Purge task interval in hours
-# Set to "0" to disable auto purge feature
+{% endif %}
+{% if zookeeper_autopurge_purge_interval is defined and zookeeper_autopurge_purge_interval %}
 autopurge.purgeInterval={{ zookeeper_autopurge_purge_interval }}
+{% endif %}
+{% if zookeeper_server_connection_factory is defined and zookeeper_server_connection_factory %}
+serverCnxnFactory={{ zookeeper_server_connection_factory }}
+{% endif %}
+{% if zookeeper_version is version('3.7.0', '>=') %}
+{% if zookeeper_leader_close_socket_async is defined %}
+leader.closeSocketAsync={{ zookeeper_leader_close_socket_async | ternary('true', 'false')  }}
+{% endif %}
+{% if zookeeper_learner_close_socket_async is defined %}
+learner.closeSocketAsync={{ zookeeper_learner_close_socket_async | ternary('true', 'false')  }}
+{% endif %}
+{% endif %}
 
-## Metrics Providers
-#
-# https://prometheus.io Metrics Exporter
-metricsProvider.className={{ zookeeper_metrics_provider_class_name }}
-metricsProvider.httpPort={{ zookeeper_metrics_provider_http_port }}
-metricsProvider.exportJvmInfo={{ zookeeper_metrics_provider_export_jvm_info | ternary('true', 'false') }}
-
-## Zookeeper Servers
+# Cluster options
+initLimit={{ zookeeper_init_limit }}
+syncLimit={{ zookeeper_sync_limit }}
+{% if zookeeper_4lw_commands_whitelist is defined and zookeeper_4lw_commands_whitelist %}
+4lw.commands.whitelist={{ zookeeper_4lw_commands_whitelist | join(',') }}
+{% endif %}
 {% for host in ansible_play_hosts %}
 server.{{ hostvars[host].zookeeper_id }}={{ hostvars[host].ansible_hostname }}:{{ zookeeper_leader_port }}:{{ zookeeper_election_port }}
 {% endfor %}
+
+# Encryption, Authentication, Authorization options
+{% if zookeeper_ssl_quorum is defined %}
+sslQuorum={{ zookeeper_ssl_quorum | ternary('true', 'false') }}
+{% endif %}
+{% if zookeeper_ssl_quorum_client_auth is defined and zookeeper_ssl_quorum_client_auth %}
+ssl.quorum.clientAuth={{ zookeeper_ssl_quorum_client_auth }}
+{% endif %}
+{% if zookeeper_ssl_quorum_hostname_verification is defined %}
+ssl.quorum.hostnameVerification={{ zookeeper_ssl_quorum_hostname_verification | ternary('true', 'false') }}
+{% endif %}
+{% if zookeeper_ssl_quorum_trust_store_type is defined and zookeeper_ssl_quorum_trust_store_type %}
+ssl.quorum.trustStore.type={{ zookeeper_ssl_quorum_trust_store_type }}
+{% endif %}
+{% if zookeeper_ssl_quorum_trust_store_location is defined and zookeeper_ssl_quorum_trust_store_location %}
+ssl.quorum.trustStore.location={{ zookeeper_ssl_quorum_trust_store_location }}
+{% endif %}
+{% if zookeeper_ssl_quorum_trust_store_password is defined and zookeeper_ssl_quorum_trust_store_password %}
+ssl.quorum.trustStore.password={{ zookeeper_ssl_quorum_trust_store_password }}
+{% endif %}
+{% if zookeeper_ssl_quorum_trust_store_password_path is defined and zookeeper_ssl_quorum_trust_store_password_path %}
+ssl.quorum.trustStore.passwordPath={{ zookeeper_ssl_quorum_trust_store_password_path }}
+{% endif %}
+{% if zookeeper_ssl_quorum_key_store_type is defined and zookeeper_ssl_quorum_key_store_type %}
+ssl.quorum.keyStore.type={{ zookeeper_ssl_quorum_key_store_type }}
+{% endif %}
+{% if zookeeper_ssl_quorum_key_store_location is defined and zookeeper_ssl_quorum_key_store_location %}
+ssl.quorum.keyStore.location={{ zookeeper_ssl_quorum_key_store_location }}
+{% endif %}
+{% if zookeeper_ssl_quorum_key_store_password is defined and zookeeper_ssl_quorum_key_store_password %}
+ssl.quorum.keyStore.password={{ zookeeper_ssl_quorum_key_store_password }}
+{% endif %}
+{% if zookeeper_ssl_quorum_key_store_password_path is defined and zookeeper_ssl_quorum_key_store_password_path %}
+ssl.quorum.keyStore.passwordPath={{ zookeeper_ssl_quorum_key_store_password_path }}
+{% endif %}
+{% if zookeeper_ssl_client_auth is defined and zookeeper_ssl_client_auth %}
+ssl.clientAuth={{ zookeeper_ssl_client_auth }}
+{% endif %}
+{% if zookeeper_ssl_hostname_verification is defined %}
+ssl.hostnameVerification={{ zookeeper_ssl_hostname_verification | ternary('true', 'false') }}
+{% endif %}
+{% if zookeeper_ssl_trust_store_type is defined and zookeeper_ssl_trust_store_type %}
+ssl.trustStore.type={{ zookeeper_ssl_trust_store_type }}
+{% endif %}
+{% if zookeeper_ssl_trust_store_location is defined and zookeeper_ssl_trust_store_location %}
+ssl.trustStore.location={{ zookeeper_ssl_trust_store_location }}
+{% endif %}
+{% if zookeeper_ssl_trust_store_password is defined and zookeeper_ssl_trust_store_password %}
+ssl.trustStore.password={{ zookeeper_ssl_trust_store_password }}
+{% endif %}
+{% if zookeeper_ssl_trust_store_password_path is defined  and zookeeper_ssl_trust_store_password_path %}
+ssl.trustStore.passwordPath={{ zookeeper_ssl_trust_store_password_path }}
+{% endif %}
+{% if zookeeper_ssl_key_store_type is defined and zookeeper_ssl_key_store_type %}
+ssl.keyStore.type={{ zookeeper_ssl_key_store_type }}
+{% endif %}
+{% if zookeeper_ssl_key_store_location is defined and zookeeper_ssl_key_store_location %}
+ssl.keyStore.location={{ zookeeper_ssl_key_store_location }}
+{% endif %}
+{% if zookeeper_ssl_key_store_password is defined and zookeeper_ssl_key_store_password %}
+ssl.keyStore.password={{ zookeeper_ssl_key_store_password }}
+{% endif %}
+{% if zookeeper_ssl_key_store_password_path is defined and zookeeper_ssl_key_store_password_path %}
+ssl.keyStore.passwordPath={{ zookeeper_ssl_key_store_password_path }}
+{% endif %}
+
+# AdminServer configuration
+{% if zookeeper_admin_enable_server is defined %}
+admin.enableServer={{ zookeeper_admin_enable_server | ternary('true', 'false') }}
+{% endif %}
+{% if zookeeper_admin_server_address is defined and zookeeper_admin_server_address %}
+admin.serverAddress={{ zookeeper_admin_server_address }}
+{% endif %}
+{% if zookeeper_admin_server_port is defined and zookeeper_admin_server_port %}
+admin.serverPort={{ zookeeper_admin_server_port }}
+{% endif %}
+{% if zookeeper_admin_idle_timeout is defined and zookeeper_admin_idle_timeout %}
+admin.idleTimeout={{ zookeeper_admin_idle_timeout }}
+{% endif %}
+{% if zookeeper_admin_command_url is defined and zookeeper_admin_command_url %}
+admin.commandURL={{ zookeeper_admin_command_url }}
+{% endif %}
+{% if zookeeper_admin_port_unification is defined and zookeeper_version is version('3.6.0', '>=') %}
+admin.portUnification={{ zookeeper_admin_port_unification | ternary('true', 'false') }}
+{% endif %}
+{% if zookeeper_admin_force_https is defined and zookeeper_version is version('3.7.1', '>=') %}
+admin.forceHttps={{ zookeeper_admin_force_https | ternary('true', 'false') }}
+{% endif %}
+
+{% if zookeeper_version is version('3.6.0', '>=') %}
+# Metrics providers
+{% if zookeeper_metrics_provider_class_name is defined and zookeeper_metrics_provider_class_name %}
+metricsProvider.className={{ zookeeper_metrics_provider_class_name }}
+{% endif %}
+{% if zookeeper_metrics_provider_http_port is defined and zookeeper_metrics_provider_http_port %}
+metricsProvider.httpPort={{ zookeeper_metrics_provider_http_port }}
+{% endif %}
+{% if zookeeper_metrics_provider_export_jvm_info is defined %}
+metricsProvider.exportJvmInfo={{ zookeeper_metrics_provider_export_jvm_info | ternary('true', 'false') }}
+{% endif %}
+{% endif %}
+{% if zookeeper_version is version('3.7.1', '>=') %}
+{% if zookeeper_metrics_provider_num_worker_threads is defined and zookeeper_metrics_provider_num_worker_threads %}
+metricsProvider.numWorkerThreads={{ zookeeper_metrics_provider_num_worker_threads }}
+{% endif %}
+{% if zookeeper_metrics_provider_max_queue_size is defined and zookeeper_metrics_provider_max_queue_size %}
+metricsProvider.maxQueueSize={{ zookeeper_metrics_provider_max_queue_size }}
+{% endif %}
+{% if zookeeper_metrics_provider_worker_shutdown_timeout_ms is defined and zookeeper_metrics_provider_worker_shutdown_timeout_ms %}
+metricsProvider.workerShutdownTimeoutMs={{ zookeeper_metrics_provider_worker_shutdown_timeout_ms }}
+{% endif %}
+{% endif %}
+{% if zookeeper_metrics_provider_http_host is defined and zookeeper_metrics_provider_http_host and zookeeper_version is version('3.8.0', '>=') %}
+metricsProvider.httpHost={{ zookeeper_metrics_provider_http_host }}
+{% endif %}

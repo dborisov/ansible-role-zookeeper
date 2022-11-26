@@ -1,0 +1,15 @@
+---
+- name: Prepare
+  hosts: all
+  roles:
+    - role: dborisov.java
+  tasks:
+    - name: Install openssl and python3-cryptography
+      yum:
+        name:
+          - python{% if ansible_distribution_major_version | int >= 8 %}3{% endif %}-cryptography # For ansible openssl_* modules
+          - openssl
+
+    - name: Install iproute
+      yum:
+        name: iproute # For network facts gathering (ansible_default_ipv4)

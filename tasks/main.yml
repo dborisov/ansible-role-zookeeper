@@ -41,17 +41,6 @@
     owner: "{{ zookeeper_user_name }}"
     group: "{{ zookeeper_group_name }}"
 
-- name: Ensure required directories exist
-  file:
-    dest: "{{ item }}"
-    owner: "{{ zookeeper_user_name }}"
-    group: "{{ zookeeper_group_name }}"
-    state: directory
-    recurse: yes
-  with_items:
-    - "{{ zookeeper_log_dir }}"
-    - "{{ zookeeper_data_dir }}"
-
 - name: Ensure required symlinks exist
   file:
     src: "{{ item.src }}"
@@ -65,20 +54,44 @@
     - src: "{{ zookeeper_home_dir }}/conf"
       dest: "{{ zookeeper_conf_dir }}"
 
+- name: Ensure required directories exist
+  file:
+    dest: "{{ item }}"
+    state: directory
+    owner: "{{ zookeeper_user_name }}"
+    group: "{{ zookeeper_group_name }}"
+    mode: "0755" 
+  with_items:
+    - "{{ zookeeper_log_dir }}"
+    - "{{ zookeeper_data_dir }}"
+    - "{{ zookeeper_ssl_dir }}"
+
 - name: Ensure required config files are present
   template:
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
     owner: "{{ zookeeper_user_name }}"
     group: "{{ zookeeper_group_name }}"
-    mode: '0644'
+    mode: "{{ item.mode }}"
   notify:
     - Restart zookeeper service
   with_items:
     - src: zoo.cfg.j2
       dest: "{{ zookeeper_conf_dir }}/zoo.cfg"
+      mode: "0640"
     - src: java.env.j2
       dest: "{{ zookeeper_conf_dir }}/java.env"
+      mode: "0644"
+
+- include: ssl_quorum.yml
+  when:
+    - zookeeper_ssl_quorum is defined
+    - zookeeper_ssl_quorum
+
+- include: ssl.yml
+  when:
+    - zookeeper_secure_client_port is defined
+    - (zookeeper_secure_client_port)
 
 - name: Ensure myid is set
   copy:
@@ -98,10 +111,11 @@
     group: "{{ zookeeper_group_name }}"
     mode: '0644'
 
-- name: Ensure zookeeper service is {{ zookeeper_service_enabled | ternary('enabled', 'disabled') }} on boot
+- name: Ensure zookeeper service is {{ zookeeper_service_state }} and {{ zookeeper_service_enabled | ternary('enabled', 'disabled') }} on boot
   systemd:
     name: "{{ zookeeper_service_name }}"
-    enabled: "{{ zookeeper_service_enabled | ternary('yes', 'no') }}"
+    state: "{{ zookeeper_service_state }}"
+    enabled: "{{ zookeeper_service_enabled }}"
 
 - name: Ensure PATH variable contains {{ zookeeper_home_dir }}/bin directory
   copy:

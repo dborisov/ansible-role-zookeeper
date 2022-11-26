@@ -1,0 +1,40 @@
+---
+# Since znode ansible module does not currently support SSL, the tests are written in pure python
+- name: Verify
+  hosts: all
+  tasks:
+    - name: Create test node on the zookeeper-1
+      shell: |
+        from kazoo.client import KazooClient
+        zk = KazooClient(hosts='127.0.0.1:2281', use_ssl=True, verify_certs=False)
+        zk.start()
+        zk.create("/test-node", b"test-value")
+        zk.stop()
+      args:
+        executable: "{{ ansible_playbook_python }}"
+      delegate_to: localhost
+      run_once: yes
+
+    - name: Read test node on the zookeeper-2
+      shell: |
+        from kazoo.client import KazooClient
+        zk = KazooClient(hosts='127.0.0.1:2282', use_ssl=True, verify_certs=False)
+        zk.start()
+        zk.get("/test-node")
+        zk.stop()
+      args:
+        executable: "{{ ansible_playbook_python }}"
+      delegate_to: localhost
+      run_once: yes
+
+    - name: Delete test node on the zookeeper-3
+      shell: |
+        from kazoo.client import KazooClient
+        zk = KazooClient(hosts='127.0.0.1:2283', use_ssl=True, verify_certs=False)
+        zk.start()
+        zk.delete("/test-node")
+        zk.stop()
+      args:
+        executable: "{{ ansible_playbook_python }}"
+      delegate_to: localhost
+      run_once: yes

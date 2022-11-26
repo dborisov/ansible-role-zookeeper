@@ -3,5 +3,4 @@
   hosts: all
   roles:
     - role: dborisov.zookeeper
-  vars:
-    zookeeper_version: "{{ lookup('env', 'ZOOKEEPER_VERSION') }}"
+      zookeeper_version: "{{ lookup('env', 'ZOOKEEPER_VERSION') }}"
