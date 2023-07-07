@@ -45,6 +45,7 @@ jobs:
         run: tox
         env:
           ANSIBLE_FORCE_COLOR: '1'
+          NAMESPACE: ${{ matrix.config.namespace }}
           IMAGE: ${{ matrix.config.image }}
           TAG: ${{ matrix.config.tag }}
           ZOOKEEPER_VERSION: ${{ matrix.zookeeper-version }}
