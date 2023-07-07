@@ -1,6 +1,5 @@
-molecule[docker,lint]
-ansible-lint
-ansible-compat < 1.0.0
-identify < 2.4.3
-rich < 11.0.0
+molecule >= 4.0.0
+molecule-docker
+ansible-lint >= 6.0.0
+urllib3 < 2 # https://github.com/docker/docker-py/issues/3113
 kazoo

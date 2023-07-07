@@ -2,29 +2,37 @@ on: push
 
 jobs:
   molecule:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.6', '3.8', '3.9']
-        zookeeper-version: ['3.5.10', '3.6.3', '3.7.1', '3.8.0']
+        python-version: ['3.9']
+        zookeeper-version: ['3.5.10', '3.6.4', '3.7.1', '3.8.1']
         config:
-          - image: "centos"
-            tag: "7"
-          - image: "rockylinux"
+          - namespace: "rockylinux"
+            image: "rockylinux"
+            tag: "8-ubi-init"
+          - namespace: "rockylinux"
+            image: "rockylinux"
+            tag: "9-ubi-init"
+          - namespace: "library"
+            image: "almalinux"
             tag: "8"
-          - image: "rockylinux"
+          - namespace: "library"
+            image: "almalinux"
             tag: "9"
-          - image: "almalinux"
-            tag: "8"
-          - image: "almalinux"
-            tag: "9"
+          - namespace: "redhat"
+            image: "ubi8"
+            tag: "latest"
+          - namespace: "redhat"
+            image: "ubi9"
+            tag: "latest"
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 

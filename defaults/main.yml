@@ -1,5 +1,5 @@
 ---
-zookeeper_version: "3.8.0"
+zookeeper_version: "3.8.1"
 zookeeper_distro_file: "apache-zookeeper-{{ zookeeper_version }}-bin.tar.gz"
 zookeeper_distro_url: "https://archive.apache.org/dist/zookeeper/zookeeper-{{ zookeeper_version }}/{{ zookeeper_distro_file }}"
 zookeeper_user_name: zookeeper

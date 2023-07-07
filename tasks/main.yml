@@ -1,16 +1,16 @@
 ---
 - name: Ensure ps util is installed
-  yum:
+  ansible.builtin.yum:
     name: procps-ng # For zkServer.sh
 
 - name: Ensure {{ zookeeper_group_name }} group exists
-  group:
+  ansible.builtin.group:
     name: "{{ zookeeper_group_name }}"
     system: yes
   when: zookeeper_create_group
 
 - name: Ensure {{ zookeeper_user_name }} user exists
-  user:
+  ansible.builtin.user:
     name: "{{ zookeeper_user_name }}"
     group: "{{ zookeeper_group_name }}"
     createhome: no
@@ -18,7 +18,7 @@
   when: zookeeper_create_user
 
 - name: Ensure {{ zookeeper_base_dir }} directory exists
-  file:
+  ansible.builtin.file:
     path: "{{ zookeeper_base_dir }}"
     state: directory
     owner: "{{ zookeeper_user_name }}"
@@ -26,14 +26,15 @@
     mode: "0755"
 
 - name: Download Zookeeper {{ zookeeper_version }} distro
-  get_url:
+  ansible.builtin.get_url:
     url: "{{ zookeeper_distro_url }}"
     dest: "{{ zookeeper_base_dir }}/{{ zookeeper_distro_file }}"
     owner: "{{ zookeeper_user_name }}"
     group: "{{ zookeeper_group_name }}"
+    mode: "644"
 
 - name: Unarchive Zookeeper {{ zookeeper_version }} distro
-  unarchive:
+  ansible.builtin.unarchive:
     src: "{{ zookeeper_base_dir }}/{{ zookeeper_distro_file }}"
     dest: "{{ zookeeper_base_dir }}"
     remote_src: yes
@@ -42,7 +43,7 @@
     group: "{{ zookeeper_group_name }}"
 
 - name: Ensure required symlinks exist
-  file:
+  ansible.builtin.file:
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
     state: link
@@ -55,7 +56,7 @@
       dest: "{{ zookeeper_conf_dir }}"
 
 - name: Ensure required directories exist
-  file:
+  ansible.builtin.file:
     dest: "{{ item }}"
     state: directory
     owner: "{{ zookeeper_user_name }}"
@@ -67,7 +68,7 @@
     - "{{ zookeeper_ssl_dir }}"
 
 - name: Ensure required config files are present
-  template:
+  ansible.builtin.template:
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
     owner: "{{ zookeeper_user_name }}"
@@ -83,18 +84,20 @@
       dest: "{{ zookeeper_conf_dir }}/java.env"
       mode: "0644"
 
-- include: ssl_quorum.yml
+- name: Include Zookeeper quorum SSL configuration
+  ansible.builtin.include_tasks: ssl_quorum.yml
   when:
     - zookeeper_ssl_quorum is defined
     - zookeeper_ssl_quorum
 
-- include: ssl.yml
+- name: Include Zookeeper SSL configuration
+  ansible.builtin.include_tasks: ssl.yml
   when:
     - zookeeper_secure_client_port is defined
     - (zookeeper_secure_client_port)
 
 - name: Ensure myid is set
-  copy:
+  ansible.builtin.copy:
     dest: "{{ zookeeper_data_dir }}/myid"
     content: "{{ zookeeper_id }}"
     owner: "{{ zookeeper_user_name }}"
@@ -104,7 +107,7 @@
     - Restart zookeeper service
 
 - name: Ensure zookeeper systemd unit is present
-  template:
+  ansible.builtin.template:
     src: "{{ zookeeper_service_name }}.j2"
     dest: "/etc/systemd/system/{{ zookeeper_service_name }}"
     owner: "{{ zookeeper_user_name }}"
@@ -112,13 +115,13 @@
     mode: '0644'
 
 - name: Ensure zookeeper service is {{ zookeeper_service_state }} and {{ zookeeper_service_enabled | ternary('enabled', 'disabled') }} on boot
-  systemd:
+  ansible.builtin.systemd:
     name: "{{ zookeeper_service_name }}"
     state: "{{ zookeeper_service_state }}"
     enabled: "{{ zookeeper_service_enabled }}"
 
 - name: Ensure PATH variable contains {{ zookeeper_home_dir }}/bin directory
-  copy:
+  ansible.builtin.copy:
     dest: "/etc/profile.d/zookeeper.sh"
     content: "export PATH=$PATH:{{ zookeeper_home_dir }}/bin"
     owner: "{{ zookeeper_user_name }}"

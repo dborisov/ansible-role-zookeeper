@@ -3,7 +3,7 @@
   hosts: all
   tasks:
     - name: Create test node
-      znode:
+      community.general.znode:
         hosts: '127.0.0.1:2181'
         name: /test-node
         value: test-value
@@ -12,7 +12,7 @@
       run_once: yes
 
     - name: Read test node
-      znode:
+      community.general.znode:
         hosts: '127.0.0.1:2181'
         name: /test-node
         op: get
@@ -20,7 +20,7 @@
       run_once: yes
 
     - name: Delete test node
-      znode:
+      community.general.znode:
         hosts: '127.0.0.1:2181'
         name: /test-node
         state: absent

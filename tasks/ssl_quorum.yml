@@ -1,12 +1,17 @@
 ---
-- block:
+- name: Zookeeper quorum SSL configuration
+  when:
+    - not zookeeper_ssl_quorum_trust_store | default('') | string
+    - not zookeeper_ssl_quorum_key_store | default('') | string
+  block:
     - name: Generate Zookeeper quorum CA key
       # Reasons not to use openssl_privatekey module:
       # - Starting from OpenSSL 1.1.0, the default algorithms in the pkcs8 utility have been changed to PKCS#5 v2.0.
       #   Java does not fully support PKCS#5 v2.0 (https://bugs.openjdk.org/browse/JDK-8076999).
       #   The openssl_privatekey module does not allow you to select a java-supported algorithm because the cipher argument must always be set to auto.
       # - Prior to Ansible 2.10, the openssl_privatekey module had no format argument. We cannot generate a key in pkcs8 format acceptable for java.
-      shell: >
+      ansible.builtin.shell: >
+        set -o pipefail &&
         openssl genrsa 4096 | openssl pkcs8 -topk8 -inform PEM -out {{ zookeeper_ssl_dir }}/quorum-ca.key
         {% if zookeeper_ssl_quorum_trust_store_password %}-passout pass:{{ zookeeper_ssl_quorum_trust_store_password }} -v1 PBE-SHA1-3DES{% else %}-nocrypt{% endif %}
         && chown {{ zookeeper_user_name }}:{{ zookeeper_group_name }} {{ zookeeper_ssl_dir }}/quorum-ca.key
@@ -15,7 +20,7 @@
         creates: "{{ zookeeper_ssl_dir }}/quorum-ca.key"
 
     - name: Generate Zookeeper quorum CA certificate signing request
-      openssl_csr:
+      community.crypto.openssl_csr:
         path: "{{ zookeeper_ssl_dir }}/quorum-ca.csr"
         privatekey_path: "{{ zookeeper_ssl_dir }}/quorum-ca.key"
         privatekey_passphrase: "{{ zookeeper_ssl_quorum_trust_store_password }}"
@@ -31,7 +36,7 @@
       run_once: yes
 
     - name: Generate Zookeeper quorum CA certificate
-      openssl_certificate:
+      community.crypto.x509_certificate:
         path: "{{ zookeeper_ssl_quorum_trust_store_location }}"
         csr_path: "{{ zookeeper_ssl_dir }}/quorum-ca.csr"
         privatekey_path: "{{ zookeeper_ssl_dir }}/quorum-ca.key"
@@ -43,19 +48,19 @@
       run_once: yes
 
     - name: Read Zookeeper quorum CA certificate content
-      slurp:
+      ansible.builtin.slurp:
         src: "{{ zookeeper_ssl_quorum_trust_store_location }}"
       run_once: yes
       register: ca_cert
 
     - name: Read Zookeeper quorum CA key content
-      slurp:
+      ansible.builtin.slurp:
         src: "{{ zookeeper_ssl_dir }}/quorum-ca.key"
       run_once: yes
       register: ca_key
 
     - name: Distribute Zookeeper quorum CA certificate and key across all nodes
-      copy:
+      ansible.builtin.copy:
         dest: "{{ item.dest }}"
         content: "{{ item.content }}"
         owner: "{{ zookeeper_user_name }}"
@@ -73,7 +78,8 @@
       #   Java does not fully support PKCS#5 v2.0 (https://bugs.openjdk.org/browse/JDK-8076999).
       #   The openssl_privatekey module does not allow you to select a java-supported algorithm because the cipher argument must always be set to auto.
       # - Prior to Ansible 2.10, the openssl_privatekey module had no format argument. We cannot generate a key in pkcs8 format acceptable for java.
-      shell: >
+      ansible.builtin.shell: >
+        set -o pipefail &&
         openssl genrsa 4096 | openssl pkcs8 -topk8 -inform PEM -out {{ zookeeper_ssl_dir }}/quorum.key
         {% if zookeeper_ssl_quorum_key_store_password %}-passout pass:{{ zookeeper_ssl_quorum_key_store_password }} -v1 PBE-SHA1-3DES{% else %}-nocrypt{% endif %}
         && chown {{ zookeeper_user_name }}:{{ zookeeper_group_name }} {{ zookeeper_ssl_dir }}/quorum.key
@@ -82,7 +88,7 @@
         creates: "{{ zookeeper_ssl_dir }}/quorum.key"
 
     - name: Generate Zookeeper quorum certificate signing request 
-      openssl_csr:
+      community.crypto.openssl_csr:
         path: "{{ zookeeper_ssl_dir }}/quorum.csr"
         privatekey_path: "{{ zookeeper_ssl_dir }}/quorum.key"
         privatekey_passphrase: "{{ zookeeper_ssl_quorum_key_store_password }}"
@@ -95,7 +101,7 @@
         mode: "0600"
 
     - name: Generate Zookeeper quorum certificate
-      openssl_certificate:
+      community.crypto.x509_certificate:
         path: "{{ zookeeper_ssl_dir }}/quorum.crt"
         privatekey_path: "{{ zookeeper_ssl_dir }}/quorum.key" 
         privatekey_passphrase: "{{ zookeeper_ssl_quorum_key_store_password }}"
@@ -109,7 +115,7 @@
         mode: "0600"
 
     - name: Make key store
-      shell: >
+      ansible.builtin.shell: >
         cat quorum.crt quorum.key > {{ zookeeper_ssl_quorum_key_store_location }}
         && chown {{ zookeeper_user_name }}:{{ zookeeper_group_name }} {{ zookeeper_ssl_quorum_key_store_location }}
         && chmod 0600 {{ zookeeper_ssl_quorum_key_store_location }}
@@ -118,12 +124,9 @@
         creates: "{{ zookeeper_ssl_quorum_key_store_location }}"
       notify:
         - Restart zookeeper service
-  when:
-    - not zookeeper_ssl_quorum_trust_store | default('') | string
-    - not zookeeper_ssl_quorum_key_store | default('') | string
 
 - name: Ensure SSL certificates are present
-  copy:
+  ansible.builtin.copy:
     content: "{{ item.content }}"
     dest: "{{ item.dest }}"
     owner: "{{ zookeeper_user_name }}"

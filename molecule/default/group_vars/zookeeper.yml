@@ -1,0 +1,2 @@
+---
+zookeeper_version: "{{ lookup('env', 'ZOOKEEPER_VERSION') }}"
