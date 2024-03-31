@@ -1,0 +1,5 @@
+---
+- name: Converge
+  hosts: zookeeper
+  roles:
+    - role: dborisov.zookeeper
