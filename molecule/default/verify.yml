@@ -2,27 +2,27 @@
 - name: Verify
   hosts: all
   tasks:
-    - name: Create test node on the zookeeper-1
-      znode:
+    - name: Create test node
+      community.general.znode:
         hosts: '127.0.0.1:2181'
         name: /test-node
         value: test-value
         state: present
-      delegate_to: 127.0.0.1
-      run_once: yes
+      delegate_to: localhost
+      run_once: true
 
-    - name: Read test node on the zookeeper-2
-      znode:
-        hosts: '127.0.0.1:2182'
+    - name: Read test node
+      community.general.znode:
+        hosts: '127.0.0.1:2181'
         name: /test-node
         op: get
-      delegate_to: 127.0.0.1
-      run_once: yes
+      delegate_to: localhost
+      run_once: true
 
-    - name: Read test node on the zookeeper-3 
-      znode:
-        hosts: '127.0.0.1:2183'
+    - name: Delete test node
+      community.general.znode:
+        hosts: '127.0.0.1:2181'
         name: /test-node
-        op: get
-      delegate_to: 127.0.0.1
-      run_once: yes
+        state: absent
+      delegate_to: localhost
+      run_once: true

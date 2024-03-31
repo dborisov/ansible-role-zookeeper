@@ -1,7 +1,5 @@
 ---
 - name: Converge
-  hosts: all
+  hosts: zookeeper
   roles:
     - role: dborisov.zookeeper
-  vars:
-    zookeeper_version: "{{ lookup('env', 'ZOOKEEPER_VERSION') }}"
