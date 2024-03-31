@@ -2,3 +2,6 @@
 exclude_paths:
   - ./molecule
   - ./.tox
+
+skip_list:
+  - 'name[template]' # Jinja templates should only be at the end of ‘name’.
