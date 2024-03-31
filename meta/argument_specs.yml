@@ -1,0 +1,514 @@
+---
+argument_specs:
+  main:
+    short_description: Ansible role for installing and configuring Apache Zookeeper.
+    description: >
+      Ansible role for installing and configuring Apache Zookeeper.
+      The role supports installation of Zookeeper version 3.5.5 and higher, supports SSL configuration and can run on EL8 and EL9 platforms.
+    author: Denis Borisov
+    options:
+      zookeeper_version:
+        type: "str"
+        required: false
+        default: "3.9.1"
+        description: Zookeeper version to install.
+      zookeeper_distro_file:
+        type: "str"
+        required: false
+        default: "apache-zookeeper-{{ zookeeper_version }}-bin.tar.gz"
+        description: Zookeeper distribution archive name.
+      zookeeper_distro_url:
+        type: "str"
+        required: false
+        default: "https://archive.apache.org/dist/zookeeper/zookeeper-{{ zookeeper_version }}/{{ zookeeper_distro_file }}"
+        description: Zookeeper distribution URL.
+      zookeeper_user_name:
+        type: "str"
+        required: false
+        default: "zookeeper"
+        description: User under which Zookeeper runs.
+      zookeeper_group_name:
+        type: "str"
+        required: false
+        default: "zookeeper"
+        description: Group of the user under which Zookeeper runs.
+      zookeeper_create_user:
+        type: "bool"
+        required: false
+        default: true
+        description: >
+          Do we need to create a user? 
+          This can be useful if users are stored in an LDAP directory and you don't need to create them locally.
+      zookeeper_create_group:
+        type: "bool"
+        required: false
+        default: true
+        description: >
+          Do we need to create a user group? 
+          This can be useful if user groups are stored in an LDAP directory and you don't need to create them locally.
+      zookeeper_base_dir:
+        type: "str"
+        required: false
+        default: "/opt/zookeeper"
+        description: Zookeeper service root directory. Zookeeper distributions will be downloaded and unpacked here.
+      zookeeper_conf_dir:
+        type: "str"
+        required: false
+        default: "/etc/zookeeper"
+        description: Zookeeper service configuration directory.
+      zookeeper_ssl_dir:
+        type: "str"
+        required: false
+        default: "{{ zookeeper_conf_dir }}/ssl"
+        description: Zookeeper service SSL directory. Keystore and truststore are stored here.
+      zookeeper_run_dir:
+        type: "str"
+        required: false
+        default: "/run/zookeeper"
+        description: Zookeeper service run directory. Zookeeper pid file is stored here.
+      zookeeper_log_dir:
+        type: "str"
+        required: false
+        default: "/var/log/zookeeper"
+        description: Zookeeper service log directory. The Zookeeper service will write logs to this directory.
+      zookeeper_data_dir:
+        type: "str"
+        required: false
+        default: "/var/lib/zookeeper"
+        description: >
+          The location where ZooKeeper will store the in-memory database snapshots and, 
+          unless specified otherwise, the transaction log of updates to the database.
+      zookeeper_service_name:
+        type: "str"
+        required: false
+        default: "zookeeper.service"
+        description: Zookeeper service systemd unit name.
+      zookeeper_service_enabled:
+        type: "bool"
+        required: false
+        default: true
+        description: Should Zookeeper service start after system boot or not?
+      zookeeper_service_state:
+        type: "str"
+        required: false
+        default: "started"
+        description: Should Zookeeper service start or not?
+        choices:
+          - started
+          - stopped
+      zookeeper_service_restart_on_change:
+        type: "bool"
+        required: false
+        default: false
+        description: Should the Zookeeper service be automatically restarted on any configuration change or not?
+      zookeeper_java_env:
+        type: "dict"
+        required: false
+        default:
+          ZOO_LOG4J_PROP: INFO,ROLLINGFILE
+          ZOO_LOG_DIR: "{{ zookeeper_log_dir }}"
+          ZOOPIDFILE: "{{ zookeeper_run_dir }}/zookeeper.pid"
+        description: "Zookeeper service environment variables."
+      zookeeper_client_port:
+        type: "int"
+        required: false
+        description: The port to listen for client connections. This is the port that clients attempt to connect to.
+      zookeeper_secure_client_port:
+        type: "int"
+        required: false
+        description: >
+          The port to listen on for secure client connections using SSL. 
+          clientPort specifies the port for plaintext connections while secureClientPort specifies the port for SSL connections. 
+          Specifying both enables mixed-mode while omitting either will disable that mode. 
+          Note that SSL feature will be enabled when user plugs-in zookeeper.serverCnxnFactory, zookeeper.clientCnxnSocket as Netty.
+      zookeeper_tick_time:
+        type: "int"
+        required: false
+        description: >
+          The length of a single tick, which is the basic time unit used by ZooKeeper, as measured in milliseconds. 
+          It is used to regulate heartbeats, and timeouts. For example, the minimum session timeout will be two ticks.
+      zookeeper_max_client_connections:
+        type: "int"
+        required: false
+        description: >
+          Limits the number of concurrent connections (at the socket level) that a single client, identified by IP address, 
+          may make to a single member of the ZooKeeper ensemble. 
+          This is used to prevent certain classes of DoS attacks, including file descriptor exhaustion. 
+          The default is 60. Setting this to 0 entirely removes the limit on concurrent connections.
+      zookeeper_autopurge_snap_retain_count:
+        type: "int"
+        required: false
+        description: >
+          When enabled, ZooKeeper auto purge feature retains the autopurge.snapRetainCount most recent snapshots 
+          and the corresponding transaction logs in the dataDir and dataLogDir respectively and deletes the rest. 
+          Defaults to 3. Minimum value is 3.
+      zookeeper_autopurge_purge_interval:
+        type: "int"
+        required: false
+        description: >
+          The time interval in hours for which the purge task has to be triggered. 
+          Set to a positive integer (1 and above) to enable the auto purging. Defaults to 0.  
+      zookeeper_server_connection_factory:
+        type: "str"
+        required: false
+        description: >
+          Specifies ServerCnxnFactory implementation. 
+          This should be set to NettyServerCnxnFactory in order to use TLS based server communication. 
+          Default is NIOServerCnxnFactory.  
+      zookeeper_learner_close_socket_async:
+        type: "bool"
+        required: false
+        description: >
+          When enabled, a learner will close the quorum socket asynchronously. 
+          This is useful for TLS connections where closing a socket might take a long time, block the shutdown process, 
+          potentially delay a new leader election, and leave the quorum unavailable. 
+          Closing the socket asynchronously avoids blocking the shutdown process despite the long socket closing time 
+          and a new leader election can be started while the socket being closed. The default is false.  
+      zookeeper_leader_close_socket_async:
+        type: "bool"
+        required: false
+        description: >
+          When enabled, the leader will close a quorum socket asynchronously. 
+          This is useful for TLS connections where closing a socket might take a long time. 
+          If disconnecting a follower is initiated in ping() because of a failed SyncLimitCheck 
+          then the long socket closing time will block the sending of pings to other followers. 
+          Without receiving pings, the other followers will not send session information to the leader, which causes sessions to expire. 
+          Setting this flag to true ensures that pings will be sent regularly. The default is false.  
+      zookeeper_init_limit:
+        type: "int"
+        required: false
+        default: 10
+        description: >
+          Amount of time, in ticks (see tickTime), to allow followers to connect and sync to a leader. 
+          Increased this value as needed, if the amount of data managed by ZooKeeper is large.  
+      zookeeper_sync_limit:
+        type: "int"
+        required: false
+        default: 5
+        description: >
+          Amount of time, in ticks (see tickTime), to allow followers to sync with ZooKeeper. 
+          If followers fall too far behind a leader, they will be dropped.  
+      zookeeper_4lw_commands_whitelist:
+        type: "list"
+        required: false
+        description: >
+          A list of Four Letter Words commands that user wants to use. 
+          A valid Four Letter Words command must be put in this list else ZooKeeper server will not enable the command. 
+          By default the whitelist only contains "srvr" command which zkServer.sh uses.  
+      zookeeper_id:
+        type: "int"
+        required: true
+        description: >
+          Every machine that is part of the ZooKeeper ensemble should know about every other machine in the ensemble. 
+          You accomplish this with the series of lines of the form server.id=host:port:port. 
+          (The parameters host and port are straightforward, for each server you need to specify 
+          first a Quorum port then a dedicated port for ZooKeeper leader election).
+          You attribute the server id to each machine by creating a file named myid, one for each server, 
+          which resides in that server's data directory, as specified by the configuration file parameter dataDir.
+      zookeeper_quorum_port:
+        type: "int"
+        required: false
+        default: 2888
+        description: Zookeeper quorum port.
+      zookeeper_leader_election_port:
+        type: "int"
+        required: false
+        default: 3888
+        description: Zookeeper leader election port.
+      zookeeper_ssl_quorum:
+        type: "bool"
+        required: false
+        description: >
+          Enables encrypted quorum communication. Default is false. When enabling this feature, 
+          please also consider enabling leader.closeSocketAsync and learner.closeSocketAsync to avoid issues 
+          associated with the potentially long socket closing time when shutting down an SSL connection.  
+      zookeeper_ssl_quorum_root_ca_certificate:
+        type: "str"
+        required: false
+        description: Quorum Root CA SSL certificate content.
+      zookeeper_ssl_quorum_intermediate_ca_certificate:
+        type: "str"
+        required: false
+        description: Quorum Intermediate CA SSL certificate content.
+      zookeeper_ssl_quorum_certificate:
+        type: "str"
+        required: false
+        description: Quorum SSL certificate content.
+      zookeeper_ssl_quorum_private_key:
+        type: "str"
+        required: false
+        description: Quorum SSL private key content.
+      zookeeper_ssl_quorum_protocol:
+        type: "str"
+        required: false
+        description: "Specifies the protocol to be used in quorum TLS negotiation. Default: TLSv1.2"
+      zookeeper_ssl_quorum_enabled_protocols:
+        type: "list"
+        required: false
+        description: "Specifies the enabled protocols in quorum TLS negotiation. Default: value of protocol property"
+      zookeeper_ssl_quorum_ciphersuites:
+        type: "list"
+        required: false
+        description: >
+          Specifies the enabled cipher suites to be used in quorum TLS negotiation. 
+          Default: Enabled cipher suites depend on the Java runtime version being used.
+      zookeeper_ssl_quorum_context_supplier_class:
+        type: "str"
+        required: false
+        description: Specifies the class to be used for creating SSL context in quorum SSL communication.
+      zookeeper_ssl_quorum_crl:
+        type: "bool"
+        required: false
+        description: "Specifies whether Certificate Revocation List is enabled in quorum TLS protocols. Default: false"
+      zookeeper_ssl_quorum_ocsp:
+        type: "bool"
+        required: false
+        description: "Specifies whether Online Certificate Status Protocol is enabled in quorum TLS protocols. Default: false"
+      zookeeper_ssl_quorum_handshake_detection_timeout_millis:
+        type: "int"
+        required: false
+        description: TBD 
+      zookeeper_ssl_quorum_client_auth:
+        type: "str"
+        required: false
+        description: >
+          Specifies options to authenticate Quorum ssl connections from clients. Valid values are:
+           - "none": server will not request client authentication
+           - "want": server will "request" client authentication
+           - "need": server will "require" client authentication
+          Default: "need"
+        choices:
+          - none
+          - want
+          - need
+      zookeeper_ssl_quorum_hostname_verification:
+        type: "str"
+        required: false
+        description: >
+          Specifies whether the hostname verification is enabled in quorum TLS negotiation process. 
+          Disabling it only recommended for testing purposes. Default: true  
+      zookeeper_ssl_quorum_trust_store_type:
+        type: "str"
+        required: false
+        description: >
+          Specifies the file format of quorum truststore. Values: JKS, PEM, PKCS12 or null (detect by filename).
+          Default: null.
+      zookeeper_ssl_quorum_trust_store_location:
+        type: "path"
+        required: false
+        description: >
+          Specifies the file path to a Java truststore containing the local credentials to be used for quorum TLS connections.  
+      zookeeper_ssl_quorum_trust_store_password:
+        type: "str"
+        required: false
+        description: Specifies the password to unlock the Quorum truststore file.
+      zookeeper_ssl_quorum_trust_store_password_path:
+        type: "path"
+        required: false
+        description: >
+          Specifies the file path that contains the truststore password. 
+          Reading the password from a file takes precedence over the explicit password property.
+      zookeeper_ssl_quorum_key_store_type:
+        type: "str"
+        required: false
+        description: >
+          Specifies the file format of quorum keystore. Values: JKS, PEM, PKCS12 or null (detect by filename).
+          Default: null.
+      zookeeper_ssl_quorum_key_store_location:
+        type: "path"
+        required: false
+        description: >
+          Specifies the file path to a Java keystore containing the local credentials to be used for quorum TLS connections. 
+      zookeeper_ssl_quorum_key_store_password:
+        type: "str"
+        required: false
+        description: Specifies the password to unlock the Quorum keystore file.
+      zookeeper_ssl_quorum_key_store_password_path:
+        type: "path"
+        required: false
+        description: >
+          Specifies the file path that contains the keystore password. 
+          Reading the password from a file takes precedence over the explicit password property.
+      zookeeper_ssl_root_ca_certificate:
+        type: "str"
+        required: false
+        description: Root CA SSL certificate content.
+      zookeeper_ssl_intermediate_ca_certificate:
+        type: "str"
+        required: false
+        description: Intermediate CA SSL certificate content.
+      zookeeper_ssl_certificate:
+        type: "str"
+        required: false
+        description: SSL certificate content.
+      zookeeper_ssl_private_key:
+        type: "str"
+        required: false
+        description: SSL private key content.
+      zookeeper_ssl_protocol:
+        type: "str"
+        required: false
+        description: "Specifies the protocol to be used in client TLS negotiation. Default: TLSv1.2"
+      zookeeper_ssl_enabled_protocols:
+        type: "list"
+        required: false
+        description: "Specifies the enabled protocols in client TLS negotiation. Default: value of protocol property"
+      zookeeper_ssl_ciphersuites:
+        type: "list"
+        required: false
+        description: >
+          Specifies the enabled cipher suites to be used in client TLS negotiation. 
+          Default: Enabled cipher suites depend on the Java runtime version being used.
+      zookeeper_ssl_context_supplier_class:
+        type: "str"
+        required: false
+        description: Specifies the class to be used for creating SSL context in client SSL communication.
+      zookeeper_ssl_crl:
+        type: "bool"
+        required: false
+        description: "Specifies whether Certificate Revocation List is enabled in client TLS protocols. Default: false"
+      zookeeper_ssl_ocsp:
+        type: "bool"
+        required: false
+        description: "Specifies whether Online Certificate Status Protocol is enabled in client TLS protocols. Default: false"
+      zookeeper_ssl_handshake_detection_timeout_millis:
+        type: "int"
+        required: false
+        description: TBD 
+      zookeeper_ssl_client_auth:
+        type: "str"
+        required: false
+        description: >
+          Specifies options to authenticate ssl connections from clients. Valid values are:
+           - "none": server will not request client authentication
+           - "want": server will "request" client authentication
+           - "need": server will "require" client authentication
+          Default: "need"
+        choices:
+          - none
+          - want
+          - need
+      zookeeper_ssl_hostname_verification:
+        type: "str"
+        required: false
+        description: >
+          Specifies whether the hostname verification is enabled in client TLS negotiation process. 
+          Disabling it only recommended for testing purposes. Default: true  
+      zookeeper_ssl_trust_store_type:
+        type: "str"
+        required: false
+        description: >
+          Specifies the file format of client truststore. Values: JKS, PEM, PKCS12 or null (detect by filename).
+          Default: null.
+      zookeeper_ssl_trust_store_location:
+        type: "path"
+        required: false
+        description: >
+          Specifies the file path to a Java truststore containing the local credentials to be used for client TLS connections.  
+      zookeeper_ssl_trust_store_password:
+        type: "str"
+        required: false
+        description: Specifies the password to unlock the truststore file.
+      zookeeper_ssl_trust_store_password_path:
+        type: "path"
+        required: false
+        description: >
+          Specifies the file path that contains the truststore password. 
+          Reading the password from a file takes precedence over the explicit password property.
+      zookeeper_ssl_key_store_type:
+        type: "str"
+        required: false
+        description: >
+          Specifies the file format of client keystore. Values: JKS, PEM, PKCS12 or null (detect by filename).
+          Default: null.
+      zookeeper_ssl_key_store_location:
+        type: "path"
+        required: false
+        description: >
+          Specifies the file path to a Java keystore containing the local credentials to be used for client TLS connections.  
+      zookeeper_ssl_key_store_password:
+        type: "str"
+        required: false
+        description: Specifies the password to unlock the keystore file.
+      zookeeper_ssl_key_store_password_path:
+        type: "path"
+        required: false
+        description: >
+          Specifies the file path that contains the keystore password. 
+          Reading the password from a file takes precedence over the explicit password property.
+      zookeeper_admin_enable_server:
+        type: "bool"
+        required: false
+        description: Set to "false" to disable the AdminServer. By default the AdminServer is enabled.
+      zookeeper_admin_server_address:
+        type: "str"
+        required: false
+        description: The address the embedded Jetty server listens on. Defaults to 0.0.0.0.
+      zookeeper_admin_server_port:
+        type: "int"
+        required: false
+        description: The port the embedded Jetty server listens on. Defaults to 8080.
+      zookeeper_admin_idle_timeout:
+        type: "int"
+        required: false
+        description: Set the maximum idle time in milliseconds that a connection can wait before sending or receiving data. Defaults to 30000 ms.
+      zookeeper_admin_command_url:
+        type: "str"
+        required: false
+        description: The URL for listing and issuing commands relative to the root URL. Defaults to "/commands".
+      zookeeper_admin_port_unification:
+        type: "bool"
+        required: false
+        description: Enable the admin port to accept both HTTP and HTTPS traffic. Defaults to disabled.
+      zookeeper_admin_force_https:
+        type: "bool"
+        required: false
+        description: Force AdminServer to use SSL, thus allowing only HTTPS traffic. Defaults to disabled. Overwrites admin.portUnification settings.
+      zookeeper_admin_rate_limiter_interval_in_ms:
+        type: "int"
+        required: false
+        description: The time interval for rate limiting admin command to protect the server. Defaults to 5 mins.
+      zookeeper_admin_snapshot_enabled:
+        type: "bool"
+        required: false
+        description: The flag for enabling the snapshot command. Defaults to true.
+      zookeeper_admin_restore_enabled:
+        type: "bool"
+        required: false
+        description: The flag for enabling the restore command. Defaults to true.
+      zookeeper_admin_need_client_auth:
+        type: "bool"
+        required: false
+        description: The flag to control whether client auth is needed. Using x509 auth requires true. Defaults to false.
+      zookeeper_metrics_provider_class_name:
+        type: "str"
+        required: false
+        description: Set to "org.apache.zookeeper.metrics.prometheus.PrometheusMetricsProvider" to enable Prometheus.io exporter.
+      zookeeper_metrics_provider_http_host:
+        type: "str"
+        required: false
+        description: Prometheus.io exporter will start a Jetty server and listen this address, default is "0.0.0.0"
+      zookeeper_metrics_provider_http_port:
+        type: "int"
+        required: false
+        description: >
+          Prometheus.io exporter will start a Jetty server and bind to this port, it defaults to 7000. 
+          Prometheus end point will be http://hostname:httPort/metrics.
+      zookeeper_metrics_provider_export_jvm_info:
+        type: "bool"
+        required: false
+        description: If this property is set to true Prometheus.io will export useful metrics about the JVM. The default is true.
+      zookeeper_metrics_provider_num_worker_threads:
+        type: "int"
+        required: false
+        description: >
+          Number of worker threads for reporting Prometheus summary metrics. Default value is 1. 
+          If the number is less than 1, the main thread will be used.
+      zookeeper_metrics_provider_max_queue_size:
+        type: "int"
+        required: false
+        description: The max queue size for Prometheus summary metrics reporting task. Default value is 1000000.
+      zookeeper_metrics_provider_worker_shutdown_timeout_ms:
+        type: "int"
+        required: false
+        description: The timeout in ms for Prometheus worker threads shutdown. Default value is 1000ms.
