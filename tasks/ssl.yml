@@ -1,0 +1,238 @@
+---
+- name: Zookeeper Quorum SSL configuration
+  when: zookeeper_ssl_quorum | default(False)
+  block:
+    - name: Ensure Zookeeper Quorum PEM trust store is present
+      ansible.builtin.copy:
+        content: "{{ zookeeper_ssl_quorum_intermediate_ca_certificate | default('') + zookeeper_ssl_quorum_root_ca_certificate }}"
+        dest: "{{ zookeeper_ssl_quorum_trust_store_location }}"
+        owner: "{{ zookeeper_user_name }}"
+        group: "{{ zookeeper_group_name }}"
+        mode: "0600"
+      when:
+        zookeeper_ssl_quorum_trust_store_type | default('') | lower == 'pem'
+        or
+        zookeeper_ssl_quorum_trust_store_location | split('.') | last | lower == 'pem'
+      notify: Restart zookeeper service
+      no_log: true
+
+    - name: Ensure Zookeeper Quorum JKS trust store is present
+      community.general.java_cert:
+        cert_alias: "{{ item.alias }}"
+        cert_content: "{{ item.content }}"
+        keystore_path: "{{ zookeeper_ssl_quorum_trust_store_location }}"
+        keystore_pass: "{{ zookeeper_ssl_quorum_trust_store_password }}"
+        keystore_type: "jks"
+        keystore_create: true
+        trust_cacert: true
+        owner: "{{ zookeeper_user_name }}"
+        group: "{{ zookeeper_group_name }}"
+        mode: "0600"
+      loop:
+        - alias: quorum_intermediate_ca
+          content: "{{ zookeeper_ssl_quorum_intermediate_ca_certificate }}"
+        - alias: quorum_root_ca
+          content: "{{ zookeeper_ssl_quorum_root_ca_certificate }}"
+      when:
+        - item.content is defined
+        - (
+            zookeeper_ssl_quorum_trust_store_type | default('') | lower == 'jks'
+            or
+            zookeeper_ssl_quorum_trust_store_location | split('.') | last | lower == 'jks'
+          )
+      notify: Restart zookeeper service
+      no_log: true
+
+    - name: Ensure Zookeeper Quorum PKCS#12 trust store is present
+      community.general.java_cert:
+        cert_alias: "{{ item.alias }}"
+        cert_content: "{{ item.content }}"
+        keystore_path: "{{ zookeeper_ssl_quorum_trust_store_location }}"
+        keystore_pass: "{{ zookeeper_ssl_quorum_trust_store_password }}"
+        keystore_type: "pkcs12"
+        keystore_create: true
+        trust_cacert: true
+        owner: "{{ zookeeper_user_name }}"
+        group: "{{ zookeeper_group_name }}"
+        mode: "0600"
+      loop:
+        - alias: quorum_intermediate_ca
+          content: "{{ zookeeper_ssl_quorum_intermediate_ca_certificate }}"
+        - alias: quorum_root_ca
+          content: "{{ zookeeper_ssl_quorum_root_ca_certificate }}"
+      when:
+        - item.content is defined
+        - (
+            zookeeper_ssl_quorum_trust_store_type | default('') | lower == 'pkcs12'
+            or
+            zookeeper_ssl_quorum_trust_store_location | split('.') | last | lower == 'p12'
+          )
+      notify: Restart zookeeper service
+      no_log: true
+
+    - name: Ensure Zookeeper Quorum PEM key store is present
+      ansible.builtin.copy:
+        content: "{{ zookeeper_ssl_quorum_private_key + zookeeper_ssl_quorum_certificate }}"
+        dest: "{{ zookeeper_ssl_quorum_key_store_location }}"
+        owner: "{{ zookeeper_user_name }}"
+        group: "{{ zookeeper_group_name }}"
+        mode: "0600"
+      when:
+        zookeeper_ssl_quorum_key_store_type | default('') | lower == 'pem'
+        or
+        zookeeper_ssl_quorum_key_store_location | split('.') | last | lower == 'pem'
+      notify: Restart zookeeper service
+      no_log: true
+
+    - name: Ensure Zookeeper Quorum JKS key store is present
+      community.general.java_keystore:
+        name: quorum
+        certificate: "{{ zookeeper_ssl_quorum_certificate }}"
+        private_key: "{{ zookeeper_ssl_quorum_private_key }}"
+        password: "{{ zookeeper_ssl_quorum_key_store_password }}"
+        dest: "{{ zookeeper_ssl_quorum_key_store_location }}"
+        keystore_type: "jks"
+        owner: "{{ zookeeper_user_name }}"
+        group: "{{ zookeeper_group_name }}"
+        mode: "0600"
+      when:
+        zookeeper_ssl_quorum_key_store_type | default('') | lower == 'jks'
+        or
+        zookeeper_ssl_quorum_key_store_location | split('.') | last | lower == 'jks'
+      notify: Restart zookeeper service
+
+    - name: Ensure Zookeeper Quorum PKCS#12 key store is present
+      community.general.java_keystore:
+        name: quorum
+        certificate: "{{ zookeeper_ssl_quorum_certificate }}"
+        private_key: "{{ zookeeper_ssl_quorum_private_key }}"
+        password: "{{ zookeeper_ssl_quorum_key_store_password }}"
+        dest: "{{ zookeeper_ssl_quorum_key_store_location }}"
+        keystore_type: "pkcs12"
+        owner: "{{ zookeeper_user_name }}"
+        group: "{{ zookeeper_group_name }}"
+        mode: "0600"
+      when:
+        zookeeper_ssl_quorum_key_store_type | default('') | lower == 'pkcs12'
+        or
+        zookeeper_ssl_quorum_key_store_location | split('.') | last | lower == 'p12'
+      notify: Restart zookeeper service
+
+- name: Zookeeper SSL configuration
+  when: zookeeper_secure_client_port is defined and (zookeeper_secure_client_port)
+  block:
+    - name: Ensure Zookeeper PEM trust store is present
+      ansible.builtin.copy:
+        content: "{{ zookeeper_ssl_intermediate_ca_certificate | default('') + zookeeper_ssl_root_ca_certificate }}"
+        dest: "{{ zookeeper_ssl_trust_store_location }}"
+        owner: "{{ zookeeper_user_name }}"
+        group: "{{ zookeeper_group_name }}"
+        mode: "0600"
+      when:
+        zookeeper_ssl_trust_store_type | default('') | lower == 'pem'
+        or
+        zookeeper_ssl_trust_store_location | split('.') | last | lower == 'pem'
+      notify: Restart zookeeper service
+      no_log: true
+
+    - name: Ensure Zookeeper JKS trust store is present
+      community.general.java_cert:
+        cert_alias: "{{ item.alias }}"
+        cert_content: "{{ item.content }}"
+        keystore_path: "{{ zookeeper_ssl_trust_store_location }}"
+        keystore_pass: "{{ zookeeper_ssl_trust_store_password }}"
+        keystore_type: "jks"
+        keystore_create: true
+        trust_cacert: true
+        owner: "{{ zookeeper_user_name }}"
+        group: "{{ zookeeper_group_name }}"
+        mode: "0600"
+      loop:
+        - alias: intermediate_ca
+          content: "{{ zookeeper_ssl_intermediate_ca_certificate }}"
+        - alias: root_ca
+          content: "{{ zookeeper_ssl_root_ca_certificate }}"
+      when:
+        - item.content is defined
+        - (
+            zookeeper_ssl_trust_store_type | default('') | lower == 'jks'
+            or
+            zookeeper_ssl_trust_store_location | split('.') | last | lower == 'jks'
+          )
+      notify: Restart zookeeper service
+      no_log: true
+
+    - name: Ensure Zookeeper PKCS#12 trust store is present
+      community.general.java_cert:
+        cert_alias: "{{ item.alias }}"
+        cert_content: "{{ item.content }}"
+        keystore_path: "{{ zookeeper_ssl_trust_store_location }}"
+        keystore_pass: "{{ zookeeper_ssl_trust_store_password }}"
+        keystore_type: "pkcs12"
+        keystore_create: true
+        trust_cacert: true
+        owner: "{{ zookeeper_user_name }}"
+        group: "{{ zookeeper_group_name }}"
+        mode: "0600"
+      loop:
+        - alias: intermediate_ca
+          content: "{{ zookeeper_ssl_intermediate_ca_certificate }}"
+        - alias: root_ca
+          content: "{{ zookeeper_ssl_root_ca_certificate }}"
+      when:
+        - item.content is defined
+        - (
+            zookeeper_ssl_trust_store_type | default('') | lower == 'pkcs12'
+            or
+            zookeeper_ssl_trust_store_location | split('.') | last | lower == 'p12'
+          )
+      notify: Restart zookeeper service
+      no_log: true
+
+    - name: Ensure Zookeeper PEM key store is present
+      ansible.builtin.copy:
+        content: "{{ zookeeper_ssl_private_key + zookeeper_ssl_certificate }}"
+        dest: "{{ zookeeper_ssl_key_store_location }}"
+        owner: "{{ zookeeper_user_name }}"
+        group: "{{ zookeeper_group_name }}"
+        mode: "0600"
+      when:
+        zookeeper_ssl_key_store_type | default('') | lower == 'pem'
+        or
+        zookeeper_ssl_key_store_location | split('.') | last | lower == 'pem'
+      notify: Restart zookeeper service
+      no_log: true
+
+    - name: Ensure Zookeeper JKS key store is present
+      community.general.java_keystore:
+        name: server
+        certificate: "{{ zookeeper_ssl_certificate }}"
+        private_key: "{{ zookeeper_ssl_private_key }}"
+        password: "{{ zookeeper_ssl_key_store_password }}"
+        dest: "{{ zookeeper_ssl_key_store_location }}"
+        keystore_type: "jks"
+        owner: "{{ zookeeper_user_name }}"
+        group: "{{ zookeeper_group_name }}"
+        mode: "0600"
+      when:
+        zookeeper_ssl_key_store_type | default('') | lower == 'jks'
+        or
+        zookeeper_ssl_key_store_location | split('.') | last | lower == 'jks'
+      notify: Restart zookeeper service
+
+    - name: Ensure Zookeeper PKCS#12 key store is present
+      community.general.java_keystore:
+        name: server
+        certificate: "{{ zookeeper_ssl_certificate }}"
+        private_key: "{{ zookeeper_ssl_private_key }}"
+        password: "{{ zookeeper_ssl_key_store_password }}"
+        dest: "{{ zookeeper_ssl_key_store_location }}"
+        keystore_type: "pkcs12"
+        owner: "{{ zookeeper_user_name }}"
+        group: "{{ zookeeper_group_name }}"
+        mode: "0600"
+      when:
+        zookeeper_ssl_key_store_type | default('') | lower == 'pkcs12'
+        or
+        zookeeper_ssl_key_store_location | split('.') | last | lower == 'p12'
+      notify: Restart zookeeper service

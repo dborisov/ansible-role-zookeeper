@@ -4,60 +4,34 @@ dependency:
 driver:
   name: docker
 platforms:
-  - name: "${IMAGE:-rockylinux}-${TAG:-8}-zookeeper-1"
-    hostname: zookeeper-1
-    image: "${IMAGE:-rockylinux}:${TAG:-8}"
+  - name: "${IMAGE:-rockylinux}-${TAG:-9-ubi-init}-zookeeper-${ZOOKEEPER_VERSION:-3.8.4}"
+    hostname: zookeeper
+    image: "${NAMESPACE:-rockylinux}/${IMAGE:-rockylinux}:${TAG:-9-ubi-init}"
     pre_build_image: true
+    privileged: true
+    cgroupns_mode: host
     command: /sbin/init
     tmpfs:
       - /run
       - /tmp
     volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
     published_ports:
       - "0.0.0.0:2181:2181/tcp"
+      - "0.0.0.0:8080:8080/tcp"
+      - "0.0.0.0:7000:7000/tcp"
     networks:
-      - name: zookeeper
-  - name: "${IMAGE:-rockylinux}-${TAG:-8}-zookeeper-2"
-    hostname: zookeeper-2
-    image: "${IMAGE:-rockylinux}:${TAG:-8}"
-    pre_build_image: true
-    command: /sbin/init
-    tmpfs:
-      - /run
-      - /tmp
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
-    published_ports:
-      - "0.0.0.0:2182:2181/tcp"
-    networks:
-      - name: zookeeper
-  - name: "${IMAGE:-rockylinux}-${TAG:-8}-zookeeper-3"
-    hostname: zookeeper-3
-    image: "${IMAGE:-rockylinux}:${TAG:-8}"
-    pre_build_image: true
-    command: /sbin/init
-    tmpfs:
-      - /run
-      - /tmp
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
-    published_ports:
-      - "0.0.0.0:2183:2181/tcp"
-    networks:
-      - name: zookeeper
+      - name: local
+    groups:
+      - zookeeper
 provisioner:
   name: ansible
   env:
-    ZOOKEEPER_VERSION: ${ZOOKEEPER_VERSION:-3.7.0}
+    ZOOKEEPER_VERSION: ${ZOOKEEPER_VERSION:-3.8.4}
   inventory:
     host_vars:
-      ${IMAGE:-rockylinux}-${TAG:-8}-zookeeper-1:
+      "${IMAGE:-rockylinux}-${TAG:-9-ubi-init}-zookeeper-${ZOOKEEPER_VERSION:-3.8.4}":
         zookeeper_id: 1
-      ${IMAGE:-rockylinux}-${TAG:-8}-zookeeper-2:
-        zookeeper_id: 2
-      ${IMAGE:-rockylinux}-${TAG:-8}-zookeeper-3:
-        zookeeper_id: 3
 verifier:
   name: ansible
 lint: |

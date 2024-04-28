@@ -1,6 +1,4 @@
-molecule[docker,lint]
-ansible-lint
-ansible-compat < 1.0.0
-identify < 2.4.3
-rich < 11.0.0
-kazoo
+molecule == 6.*
+molecule-plugins[docker] == 23.*
+ansible-lint == 6.*
+kazoo == 2.10.0

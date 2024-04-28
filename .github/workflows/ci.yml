@@ -1,26 +1,39 @@
+name: Run Molecule tests
 on: push
 
 jobs:
   molecule:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.6, 3.8, 3.9]
-        zookeeper-version: [3.5.9, 3.6.3, 3.7.0]
+        python-version: ['3.9']
+        zookeeper-version: ['3.5.10', '3.6.4', '3.7.2', '3.8.4', '3.9.2']
         config:
-          - image: "centos"
-            tag: "7"
-          - image: "rockylinux"
+          - namespace: "rockylinux"
+            image: "rockylinux"
+            tag: "8-ubi-init"
+          - namespace: "rockylinux"
+            image: "rockylinux"
+            tag: "9-ubi-init"
+          - namespace: "library"
+            image: "almalinux"
             tag: "8"
-          - image: "almalinux"
-            tag: "8"
+          - namespace: "library"
+            image: "almalinux"
+            tag: "9"
+          - namespace: "redhat"
+            image: "ubi8"
+            tag: "latest"
+          - namespace: "redhat"
+            image: "ubi9"
+            tag: "latest"
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -33,6 +46,7 @@ jobs:
         run: tox
         env:
           ANSIBLE_FORCE_COLOR: '1'
+          NAMESPACE: ${{ matrix.config.namespace }}
           IMAGE: ${{ matrix.config.image }}
           TAG: ${{ matrix.config.tag }}
           ZOOKEEPER_VERSION: ${{ matrix.zookeeper-version }}

@@ -1,24 +1,24 @@
 ---
 - name: Ensure ps util is installed
-  yum:
+  ansible.builtin.yum:
     name: procps-ng # For zkServer.sh
 
 - name: Ensure {{ zookeeper_group_name }} group exists
-  group:
+  ansible.builtin.group:
     name: "{{ zookeeper_group_name }}"
-    system: yes
+    system: true
   when: zookeeper_create_group
 
 - name: Ensure {{ zookeeper_user_name }} user exists
-  user:
+  ansible.builtin.user:
     name: "{{ zookeeper_user_name }}"
     group: "{{ zookeeper_group_name }}"
-    createhome: no
-    system: yes
+    createhome: false
+    system: true
   when: zookeeper_create_user
 
 - name: Ensure {{ zookeeper_base_dir }} directory exists
-  file:
+  ansible.builtin.file:
     path: "{{ zookeeper_base_dir }}"
     state: directory
     owner: "{{ zookeeper_user_name }}"
@@ -26,87 +26,93 @@
     mode: "0755"
 
 - name: Download Zookeeper {{ zookeeper_version }} distro
-  get_url:
+  ansible.builtin.get_url:
     url: "{{ zookeeper_distro_url }}"
     dest: "{{ zookeeper_base_dir }}/{{ zookeeper_distro_file }}"
     owner: "{{ zookeeper_user_name }}"
     group: "{{ zookeeper_group_name }}"
+    mode: "644"
 
 - name: Unarchive Zookeeper {{ zookeeper_version }} distro
-  unarchive:
+  ansible.builtin.unarchive:
     src: "{{ zookeeper_base_dir }}/{{ zookeeper_distro_file }}"
     dest: "{{ zookeeper_base_dir }}"
-    remote_src: yes
+    remote_src: true
     creates: "{{ zookeeper_base_dir }}/apache-zookeeper-{{ zookeeper_version }}-bin"
     owner: "{{ zookeeper_user_name }}"
     group: "{{ zookeeper_group_name }}"
 
-- name: Ensure required directories exist
-  file:
-    dest: "{{ item }}"
-    owner: "{{ zookeeper_user_name }}"
-    group: "{{ zookeeper_group_name }}"
-    state: directory
-    recurse: yes
-  with_items:
-    - "{{ zookeeper_log_dir }}"
-    - "{{ zookeeper_data_dir }}"
-
 - name: Ensure required symlinks exist
-  file:
+  ansible.builtin.file:
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
     state: link
     owner: "{{ zookeeper_user_name }}"
     group: "{{ zookeeper_group_name }}"
-  with_items:
+  loop:
     - src: "{{ zookeeper_base_dir }}/apache-zookeeper-{{ zookeeper_version }}-bin"
       dest: "{{ zookeeper_home_dir }}"
     - src: "{{ zookeeper_home_dir }}/conf"
       dest: "{{ zookeeper_conf_dir }}"
 
+- name: Ensure required directories exist
+  ansible.builtin.file:
+    dest: "{{ item }}"
+    state: directory
+    owner: "{{ zookeeper_user_name }}"
+    group: "{{ zookeeper_group_name }}"
+    mode: "0755"
+  loop:
+    - "{{ zookeeper_log_dir }}"
+    - "{{ zookeeper_data_dir }}"
+    - "{{ zookeeper_ssl_dir }}"
+
 - name: Ensure required config files are present
-  template:
+  ansible.builtin.template:
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
     owner: "{{ zookeeper_user_name }}"
     group: "{{ zookeeper_group_name }}"
-    mode: '0644'
-  notify:
-    - Restart zookeeper service
-  with_items:
+    mode: "{{ item.mode }}"
+  notify: Restart zookeeper service
+  loop:
     - src: zoo.cfg.j2
       dest: "{{ zookeeper_conf_dir }}/zoo.cfg"
+      mode: "0640"
     - src: java.env.j2
       dest: "{{ zookeeper_conf_dir }}/java.env"
+      mode: "0644"
+
+- name: Include Zookeeper SSL configuration
+  ansible.builtin.include_tasks: ssl.yml
 
 - name: Ensure myid is set
-  copy:
+  ansible.builtin.copy:
     dest: "{{ zookeeper_data_dir }}/myid"
     content: "{{ zookeeper_id }}"
     owner: "{{ zookeeper_user_name }}"
     group: "{{ zookeeper_group_name }}"
-    mode: '0644'
-  notify:
-    - Restart zookeeper service
+    mode: "0644"
+  notify: Restart zookeeper service
 
 - name: Ensure zookeeper systemd unit is present
-  template:
+  ansible.builtin.template:
     src: "{{ zookeeper_service_name }}.j2"
     dest: "/etc/systemd/system/{{ zookeeper_service_name }}"
     owner: "{{ zookeeper_user_name }}"
     group: "{{ zookeeper_group_name }}"
-    mode: '0644'
+    mode: "0644"
 
-- name: Ensure zookeeper service is {{ zookeeper_service_enabled | ternary('enabled', 'disabled') }} on boot
-  systemd:
+- name: Ensure zookeeper service is {{ zookeeper_service_state }} and {{ zookeeper_service_enabled | ternary('enabled', 'disabled') }} on boot
+  ansible.builtin.systemd:
     name: "{{ zookeeper_service_name }}"
-    enabled: "{{ zookeeper_service_enabled | ternary('yes', 'no') }}"
+    state: "{{ zookeeper_service_state }}"
+    enabled: "{{ zookeeper_service_enabled }}"
 
 - name: Ensure PATH variable contains {{ zookeeper_home_dir }}/bin directory
-  copy:
+  ansible.builtin.copy:
     dest: "/etc/profile.d/zookeeper.sh"
     content: "export PATH=$PATH:{{ zookeeper_home_dir }}/bin"
     owner: "{{ zookeeper_user_name }}"
     group: "{{ zookeeper_group_name }}"
-    mode: '0644'
+    mode: "0644"

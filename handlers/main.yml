@@ -1,7 +1,9 @@
 ---
 - name: Restart zookeeper service
-  systemd:
+  ansible.builtin.systemd:
     name: "{{ zookeeper_service_name }}"
     state: restarted
-    daemon_reload: yes
-  when: zookeeper_service_state == 'started'
+    daemon_reload: true
+  when:
+    - zookeeper_service_state == 'started'
+    - zookeeper_service_restart_on_change
