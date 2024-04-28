@@ -2,13 +2,13 @@
 java_version: "11"
 zookeeper_version: "{{ lookup('env', 'ZOOKEEPER_VERSION') }}"
 zookeeper_secure_client_port: 2281
-zookeeper_leader_close_socket_async: yes
-zookeeper_learner_close_socket_async: yes
+zookeeper_leader_close_socket_async: true
+zookeeper_learner_close_socket_async: true
 zookeeper_4lw_commands_whitelist:
   - srvr
   - ruok
   - stat
-zookeeper_service_restart_on_change: yes
+zookeeper_service_restart_on_change: true
 zookeeper_server_connection_factory: "org.apache.zookeeper.server.NettyServerCnxnFactory"
 zookeeper_ssl_client_auth: none
 zookeeper_ssl_root_ca_certificate: "{{ vault_zookeeper_ssl_root_ca_certificate }}"
@@ -18,8 +18,8 @@ zookeeper_ssl_trust_store_password: "{{ vault_zookeeper_ssl_trust_store_password
 zookeeper_ssl_trust_store_location: "{{ zookeeper_ssl_dir }}/server-truststore.pem"
 zookeeper_ssl_key_store_password: "{{ vault_zookeeper_ssl_key_store_password }}"
 zookeeper_ssl_key_store_location: "{{ zookeeper_ssl_dir }}/server-keystore.jks"
-zookeeper_ssl_quorum: yes
-zookeeper_ssl_quorum_hostname_verification: no # https://issues.apache.org/jira/browse/ZOOKEEPER-4403
+zookeeper_ssl_quorum: true
+zookeeper_ssl_quorum_hostname_verification: false # https://issues.apache.org/jira/browse/ZOOKEEPER-4403
 zookeeper_ssl_quorum_root_ca_certificate: "{{ vault_zookeeper_ssl_quorum_root_ca_certificate }}"
 zookeeper_ssl_quorum_intermediate_ca_certificate: "{{ vault_zookeeper_ssl_quorum_intermediate_ca_certificate }}"
 zookeeper_ssl_quorum_certificate: "{{ vault_zookeeper_ssl_quorum_certificate }}"

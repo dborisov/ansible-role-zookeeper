@@ -14,7 +14,7 @@
         or
         zookeeper_ssl_quorum_trust_store_location | split('.') | last | lower == 'pem'
       notify: Restart zookeeper service
-      no_log: yes
+      no_log: true
 
     - name: Ensure Zookeeper Quorum JKS trust store is present
       community.general.java_cert:
@@ -82,7 +82,7 @@
         or
         zookeeper_ssl_quorum_key_store_location | split('.') | last | lower == 'pem'
       notify: Restart zookeeper service
-      no_log: yes
+      no_log: true
 
     - name: Ensure Zookeeper Quorum JKS key store is present
       community.general.java_keystore:
@@ -133,7 +133,7 @@
         or
         zookeeper_ssl_trust_store_location | split('.') | last | lower == 'pem'
       notify: Restart zookeeper service
-      no_log: yes
+      no_log: true
 
     - name: Ensure Zookeeper JKS trust store is present
       community.general.java_cert:
@@ -201,7 +201,7 @@
         or
         zookeeper_ssl_key_store_location | split('.') | last | lower == 'pem'
       notify: Restart zookeeper service
-      no_log: yes
+      no_log: true
 
     - name: Ensure Zookeeper JKS key store is present
       community.general.java_keystore:

@@ -4,7 +4,7 @@ dependency:
 driver:
   name: docker
 platforms:
-  - name: "${IMAGE:-rockylinux}-${TAG:-9-ubi-init}-zookeeper-${ZOOKEEPER_VERSION:-3.9.1}-1"
+  - name: "${IMAGE:-rockylinux}-${TAG:-9-ubi-init}-zookeeper-${ZOOKEEPER_VERSION:-3.8.4}-1"
     hostname: zookeeper-1
     image: "${NAMESPACE:-rockylinux}/${IMAGE:-rockylinux}:${TAG:-9-ubi-init}"
     pre_build_image: true
@@ -24,7 +24,7 @@ platforms:
       - name: local
     groups:
       - zookeeper
-  - name: "${IMAGE:-rockylinux}-${TAG:-9-ubi-init}-zookeeper-${ZOOKEEPER_VERSION:-3.9.1}-2"
+  - name: "${IMAGE:-rockylinux}-${TAG:-9-ubi-init}-zookeeper-${ZOOKEEPER_VERSION:-3.8.4}-2"
     hostname: zookeeper-2
     image: "${NAMESPACE:-rockylinux}/${IMAGE:-rockylinux}:${TAG:-9-ubi-init}"
     pre_build_image: true
@@ -44,7 +44,7 @@ platforms:
       - name: local
     groups:
       - zookeeper
-  - name: "${IMAGE:-rockylinux}-${TAG:-9-ubi-init}-zookeeper-${ZOOKEEPER_VERSION:-3.9.1}-3"
+  - name: "${IMAGE:-rockylinux}-${TAG:-9-ubi-init}-zookeeper-${ZOOKEEPER_VERSION:-3.8.4}-3"
     hostname: zookeeper-3
     image: "${NAMESPACE:-rockylinux}/${IMAGE:-rockylinux}:${TAG:-9-ubi-init}"
     pre_build_image: true
@@ -70,14 +70,14 @@ provisioner:
     defaults:
       vault_password_file: ${MOLECULE_SCENARIO_DIRECTORY}/vault
   env:
-    ZOOKEEPER_VERSION: ${ZOOKEEPER_VERSION:-3.9.1}
+    ZOOKEEPER_VERSION: ${ZOOKEEPER_VERSION:-3.8.4}
   inventory:
     host_vars:
-      "${IMAGE:-rockylinux}-${TAG:-9-ubi-init}-zookeeper-${ZOOKEEPER_VERSION:-3.9.1}-1":
+      "${IMAGE:-rockylinux}-${TAG:-9-ubi-init}-zookeeper-${ZOOKEEPER_VERSION:-3.8.4}-1":
         zookeeper_id: 1
-      "${IMAGE:-rockylinux}-${TAG:-9-ubi-init}-zookeeper-${ZOOKEEPER_VERSION:-3.9.1}-2":
+      "${IMAGE:-rockylinux}-${TAG:-9-ubi-init}-zookeeper-${ZOOKEEPER_VERSION:-3.8.4}-2":
         zookeeper_id: 2
-      "${IMAGE:-rockylinux}-${TAG:-9-ubi-init}-zookeeper-${ZOOKEEPER_VERSION:-3.9.1}-3":
+      "${IMAGE:-rockylinux}-${TAG:-9-ubi-init}-zookeeper-${ZOOKEEPER_VERSION:-3.8.4}-3":
         zookeeper_id: 3
 verifier:
   name: ansible

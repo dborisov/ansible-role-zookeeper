@@ -6,15 +6,15 @@
 - name: Ensure {{ zookeeper_group_name }} group exists
   ansible.builtin.group:
     name: "{{ zookeeper_group_name }}"
-    system: yes
+    system: true
   when: zookeeper_create_group
 
 - name: Ensure {{ zookeeper_user_name }} user exists
   ansible.builtin.user:
     name: "{{ zookeeper_user_name }}"
     group: "{{ zookeeper_group_name }}"
-    createhome: no
-    system: yes
+    createhome: false
+    system: true
   when: zookeeper_create_user
 
 - name: Ensure {{ zookeeper_base_dir }} directory exists
@@ -37,7 +37,7 @@
   ansible.builtin.unarchive:
     src: "{{ zookeeper_base_dir }}/{{ zookeeper_distro_file }}"
     dest: "{{ zookeeper_base_dir }}"
-    remote_src: yes
+    remote_src: true
     creates: "{{ zookeeper_base_dir }}/apache-zookeeper-{{ zookeeper_version }}-bin"
     owner: "{{ zookeeper_user_name }}"
     group: "{{ zookeeper_group_name }}"

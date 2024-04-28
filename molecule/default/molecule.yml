@@ -4,7 +4,7 @@ dependency:
 driver:
   name: docker
 platforms:
-  - name: "${IMAGE:-rockylinux}-${TAG:-9-ubi-init}-zookeeper-${ZOOKEEPER_VERSION:-3.9.1}"
+  - name: "${IMAGE:-rockylinux}-${TAG:-9-ubi-init}-zookeeper-${ZOOKEEPER_VERSION:-3.8.4}"
     hostname: zookeeper
     image: "${NAMESPACE:-rockylinux}/${IMAGE:-rockylinux}:${TAG:-9-ubi-init}"
     pre_build_image: true
@@ -27,10 +27,10 @@ platforms:
 provisioner:
   name: ansible
   env:
-    ZOOKEEPER_VERSION: ${ZOOKEEPER_VERSION:-3.9.1}
+    ZOOKEEPER_VERSION: ${ZOOKEEPER_VERSION:-3.8.4}
   inventory:
     host_vars:
-      "${IMAGE:-rockylinux}-${TAG:-9-ubi-init}-zookeeper-${ZOOKEEPER_VERSION:-3.9.1}":
+      "${IMAGE:-rockylinux}-${TAG:-9-ubi-init}-zookeeper-${ZOOKEEPER_VERSION:-3.8.4}":
         zookeeper_id: 1
 verifier:
   name: ansible

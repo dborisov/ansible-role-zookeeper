@@ -10,7 +10,7 @@ argument_specs:
       zookeeper_version:
         type: "str"
         required: false
-        default: "3.9.1"
+        default: "3.8.4"
         description: Zookeeper version to install.
       zookeeper_distro_file:
         type: "str"

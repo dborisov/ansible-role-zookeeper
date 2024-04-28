@@ -2,7 +2,7 @@
 
 Ansible role for installing and configuring Apache Zookeeper.
 The role supports installation of Zookeeper version 3.5.5 and higher.
-The default version is 3.9.1
+The default version is `3.8.4`
 
 ## Supported Platforms
 
@@ -30,8 +30,8 @@ zookeeper_ssl_trust_store_password: "{{ vault_zookeeper_ssl_trust_store_password
 zookeeper_ssl_trust_store_location: "{{ zookeeper_ssl_dir }}/server-truststore.pem" # Can be pem, jks or p12
 zookeeper_ssl_key_store_password: "{{ vault_zookeeper_ssl_key_store_password }}"
 zookeeper_ssl_key_store_location: "{{ zookeeper_ssl_dir }}/server-keystore.pem" # Can be pem, jks or p12
-zookeeper_ssl_quorum: yes
-zookeeper_ssl_quorum_hostname_verification: no # https://issues.apache.org/jira/browse/ZOOKEEPER-4403
+zookeeper_ssl_quorum: true
+zookeeper_ssl_quorum_hostname_verification: false # https://issues.apache.org/jira/browse/ZOOKEEPER-4403
 zookeeper_ssl_quorum_root_ca_certificate: "{{ vault_zookeeper_ssl_quorum_root_ca_certificate }}" # Zookeeper Quorum Root CA certificate content in PEM format
 zookeeper_ssl_quorum_intermediate_ca_certificate: "{{ vault_zookeeper_ssl_quorum_intermediate_ca_certificate }}" # # Zookeeper Quorum Intermediate certificate content in PEM format (optional).
 zookeeper_ssl_quorum_certificate: "{{ vault_zookeeper_ssl_quorum_certificate }}" # Zookeeper Quorum certificate content in PEM format
